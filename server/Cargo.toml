@@ -3,8 +3,9 @@ name = "vim-mcp"
 version = "0.2.0"
 edition = "2021"
 description = "MCP server connecting Claude Code to Vim/Neovim"
+authors = ["HollowPhobos"]
 license = "MIT"
-repository = "https://github.com/iggredible/vim-mcp"
+repository = "https://github.com/HollowPhobos/vim-mcp"
 
 [[bin]]
 name = "vim-mcp"

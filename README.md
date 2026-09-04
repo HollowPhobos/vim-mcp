@@ -1,7 +1,12 @@
 # vim-mcp
 
 Simple MCP (Model Context Protocol) integration for Vim and Claude Code.
- 
+
+> This is a fork of [iggredible/vim-mcp](https://github.com/iggredible/vim-mcp).
+> The MCP server has been rewritten from Node.js to Rust; the Vim plugin is the
+> original Vim script. The rewrite has diverged from upstream and is maintained
+> independently here.
+
 ## Features
 
 - Connect Claude Code to one of your Vim instances
@@ -89,7 +94,7 @@ Resources:
 
 Using vim-plug:
 ```vim
-Plug 'iggredible/vim-mcp'
+Plug 'HollowPhobos/vim-mcp'
 ```
 
 ### Install the MCP Server
@@ -149,7 +154,7 @@ To remove vim-mcp:
 1. Remove the plugin from your `.vimrc`:
 ```vim
 " Delete or comment out this line:
-" Plug 'iggredible/vim-mcp'
+" Plug 'HollowPhobos/vim-mcp'
 ```
 
 2. Clean up the plugin files:
