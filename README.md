@@ -80,7 +80,7 @@ Resources:
 ### Prerequisites
 
 - Vim 8+ with `+channel` feature OR Neovim 0.5+
-- Node.js 18+
+- Rust toolchain (`cargo`) — install from [rustup.rs](https://rustup.rs)
 - Unix domain socket support (Linux/macOS)
 - File system write access to `/tmp` directory
 - [claude code](https://www.anthropic.com/claude-code) / [claude desktop](https://claude.ai/download) or similar tools that support MCP
@@ -94,7 +94,7 @@ Plug 'iggredible/vim-mcp'
 
 ### Install the MCP Server
 
-The MCP server is a Node project. You need to install the dependencies.
+The MCP server is a Rust program. You build it once with `cargo`.
 
 #### Option 1: Using the Install Script
 
@@ -104,59 +104,43 @@ cd ~/.vim/plugged/vim-mcp  # Or wherever your plugin is installed
 ```
 
 The install script will automatically:
-- Check prerequisites (Node.js and Vim versions)
-- Install Node.js dependencies
-- Attempt global installation of the `vim-mcp` command
+- Check prerequisites (Rust toolchain and Vim versions)
+- Build the release binary
 - Show you the correct Claude Code configuration
 
 #### Option 2: Manual Installation
 
-If you prefer to install manually or the `install.sh` script doesn't work:
-
-1. Install Node.js dependencies:
+If you prefer to build manually:
 
 ```bash
 cd ~/.vim/plugged/vim-mcp/server
-npm install
+cargo build --release
 ```
 
-`npm install` will also run `chmod +x bin/vim-mcp`
-
-2. (Optional) Install globally for system-wide `vim-mcp` command (inside the `/server` directory):
+The binary is produced at `server/target/release/vim-mcp`. Optionally copy it onto
+your `PATH` for a shorter config:
 
 ```bash
-npm link
+cp target/release/vim-mcp ~/.local/bin/vim-mcp
 ```
-
-If this fails due to permissions or other reasons, you can skip global installation and use the full path in your config.
 
 ### Configure Claude Code
 
-After installation, add one of these configurations to your Claude configuration file:
-
-If global install succeeded (if `vim-mcp` command is available):
-
-```json
-  "mcpServers": {
-    "vim-mcp": {
-      "command": "vim-mcp",
-      "args": []
-    },
-  }
-```
-
-If npm link failed:
+After building, add this to your Claude configuration file. Use the full path to
+the compiled binary:
 
 ```json
 {
   "mcpServers": {
     "vim-mcp": {
-      "command": "node",
-      "args": ["/some/path/.vim/plugged/vim-mcp/server/bin/vim-mcp"]
+      "command": "/some/path/.vim/plugged/vim-mcp/server/target/release/vim-mcp",
+      "args": []
     }
   }
 }
 ```
+
+If you copied the binary onto your `PATH`, you can shorten `command` to `"vim-mcp"`.
 
 ## Uninstall
 
@@ -173,9 +157,10 @@ To remove vim-mcp:
 :PlugClean
 ```
 
-3. Remove the global `vim-mcp` command (if installed):
+3. Remove the built binary (and any copy you placed on your `PATH`):
 ```bash
-npm unlink vim-mcp
+rm -f ~/.local/bin/vim-mcp
+rm -rf ~/.vim/plugged/vim-mcp/server/target
 ```
 
 4. Remove from Claude Code configuration:

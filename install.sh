@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # vim-mcp installer script
-# Automates the installation process for users
+# Builds the Rust MCP server and prints the Claude Code configuration.
 
 set -e
 
@@ -10,24 +10,16 @@ echo "       vim-mcp Installer"
 echo "======================================="
 echo ""
 
-# Check Node.js version
-check_node() {
-    if ! command -v node &> /dev/null; then
-        echo "Error: Node.js is not installed"
-        echo "Please install Node.js >= 18.0.0 from https://nodejs.org"
+# Check the Rust toolchain
+check_rust() {
+    if ! command -v cargo &> /dev/null; then
+        echo "Error: cargo (the Rust toolchain) is not installed"
+        echo "Install it from https://rustup.rs"
         exit 1
     fi
 
-    NODE_VERSION=$(node -v | cut -d'v' -f2)
-    REQUIRED_VERSION="18.0.0"
-
-    if [ "$(printf '%s\n' "$REQUIRED_VERSION" "$NODE_VERSION" | sort -V | head -n1)" != "$REQUIRED_VERSION" ]; then
-        echo "Error: Node.js version $NODE_VERSION is too old"
-        echo "Please upgrade to Node.js >= 18.0.0"
-        exit 1
-    fi
-
-    echo "✓ Node.js $NODE_VERSION detected"
+    RUST_VERSION=$(rustc --version | awk '{print $2}')
+    echo "✓ Rust $RUST_VERSION detected"
 }
 
 # Check Vim/Neovim
@@ -55,36 +47,19 @@ check_vim() {
     fi
 }
 
-# Install server dependencies
-install_server() {
+# Build the server
+build_server() {
     echo ""
-    echo "Installing server dependencies..."
-    cd server
-    npm install
-    cd ..
-    echo "✓ Server dependencies installed"
-}
-
-# Attempt global installation
-try_global_install() {
-    echo ""
-    echo "Attempting global installation..."
-    cd server
-
-    if npm link > /dev/null 2>&1; then
-        echo "✓ vim-mcp command installed globally"
-        GLOBAL_INSTALL_SUCCESS=true
-    else
-        echo "⚠ Global installation failed (permission denied?)"
-        echo "  You can use the full path instead"
-        GLOBAL_INSTALL_SUCCESS=false
-    fi
-
-    cd ..
+    echo "Building the MCP server (release)..."
+    cargo build --release --manifest-path server/Cargo.toml
+    echo "✓ Server built"
 }
 
 # Show configuration instructions
 show_config() {
+    SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+    BINARY="$SCRIPT_DIR/server/target/release/vim-mcp"
+
     echo ""
     echo "======================================="
     echo "     Installation Complete!"
@@ -92,30 +67,18 @@ show_config() {
     echo ""
     echo "Next step: Configure Claude Code MCP settings"
     echo ""
-
-    if [ "$GLOBAL_INSTALL_SUCCESS" = true ]; then
-        echo "Use this configuration (recommended):"
-        echo '{'
-        echo '  "mcpServers": {'
-        echo '    "vim-mcp": {'
-        echo '      "command": "vim-mcp",'
-        echo '      "args": []'
-        echo '    }'
-        echo '  }'
-        echo '}'
-    else
-        SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
-        echo "Use this configuration with full path:"
-        echo '{'
-        echo '  "mcpServers": {'
-        echo '    "vim-mcp": {'
-        echo '      "command": "node",'
-        echo "      \"args\": [\"$SCRIPT_DIR/server/bin/vim-mcp.js\"]"
-        echo '    }'
-        echo '  }'
-        echo '}'
-    fi
-
+    echo "Use this configuration:"
+    echo '{'
+    echo '  "mcpServers": {'
+    echo '    "vim-mcp": {'
+    echo "      \"command\": \"$BINARY\","
+    echo '      "args": []'
+    echo '    }'
+    echo '  }'
+    echo '}'
+    echo ""
+    echo "(Optional) Copy the binary onto your PATH for a shorter config:"
+    echo "  cp \"$BINARY\" ~/.local/bin/vim-mcp"
     echo ""
     echo "After configuration:"
     echo "1. Restart Claude Code"
@@ -125,15 +88,10 @@ show_config() {
 # Main installation
 main() {
     echo "Checking prerequisites..."
-    check_node
+    check_rust
     check_vim
 
-    install_server
-
-    # Make bin executable
-    chmod +x server/bin/vim-mcp.js
-
-    try_global_install
+    build_server
     show_config
 }
 

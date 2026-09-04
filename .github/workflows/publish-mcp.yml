@@ -1,47 +1,54 @@
-name: Publish to MCP Registry
+name: Build and Release
 
 on:
   push:
+    branches: ["main"]
     tags: ["v*"]
+  pull_request:
+    branches: ["main"]
 
 jobs:
-  publish:
+  build:
     runs-on: ubuntu-latest
-    permissions:
-      id-token: write
-      contents: read
-
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Cache cargo
+        uses: Swatinem/rust-cache@v2
         with:
-          node-version: "lts/*"
-          registry-url: "https://registry.npmjs.org"
+          workspaces: server
 
-      - name: Install dependencies
+      - name: Build (release)
         working-directory: server
-        run: npm ci
+        run: cargo build --release --locked
 
-      - name: Publish to npm
+      - name: Test
         working-directory: server
-        run: npm publish
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: cargo test --release --locked
 
-      - name: Install MCP Publisher
-        run: |
-          ARCH=$(uname -m | sed 's/x86_64/amd64/;s/aarch64/arm64/')
-          OS=$(uname -s | tr '[:upper:]' '[:lower:]')
-          VERSION="1.1.0"
-          curl -L "https://github.com/modelcontextprotocol/registry/releases/download/v${VERSION}/mcp-publisher_${VERSION}_${OS}_${ARCH}.tar.gz" -o mcp-publisher.tar.gz
-          tar xzf mcp-publisher.tar.gz
-          chmod +x mcp-publisher
+      - name: Upload binary artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: vim-mcp-linux-x86_64
+          path: server/target/release/vim-mcp
 
-      - name: Login to MCP Registry
-        run: ./mcp-publisher login github-oidc
+  release:
+    needs: build
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Download binary artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: vim-mcp-linux-x86_64
 
-      - name: Publish to MCP Registry
-        run: ./mcp-publisher publish
+      - name: Attach binary to release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: vim-mcp

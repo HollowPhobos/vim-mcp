@@ -7,16 +7,5 @@
     "url": "https://github.com/iggredible/vim-mcp",
     "source": "github"
   },
-  "version": "0.1.2",
-  "packages": [
-    {
-      "registryType": "npm",
-      "registryBaseUrl": "https://registry.npmjs.org",
-      "identifier": "vim-mcp",
-      "version": "0.1.2",
-      "transport": {
-        "type": "stdio"
-      }
-    }
-  ]
+  "version": "0.2.0"
 }

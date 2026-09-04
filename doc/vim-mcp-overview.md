@@ -12,7 +12,7 @@ Claude Code <--[MCP/stdio]--> vim-mcp-server <--[Unix Socket]--> Vim instances
 
 Components:
 - **Claude Code**: MCP client that initiates all interactions
-- **vim-mcp-server**: Node.js MCP server that manages Vim instances and routes commands
+- **vim-mcp-server**: Rust MCP server that manages Vim instances and routes commands
 - **vim-mcp (plugin)**: Vim plugin that connects to the server and provides state information
 - **Registry**: JSON file at `/tmp/vim-mcp-registry.json` tracking active instances
 
